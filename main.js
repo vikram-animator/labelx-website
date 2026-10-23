@@ -33,23 +33,76 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ─── FORM HANDLING ─── */
   const forms = document.querySelectorAll('form');
   forms.forEach(form => {
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = form.querySelector('button[type="submit"]');
+      const originalText = btn ? btn.textContent : 'Submit';
+      const action = form.getAttribute('action');
+
       if (btn) {
-        const originalText = btn.textContent;
         btn.textContent = 'Submitting...';
         btn.disabled = true;
-        
-        setTimeout(() => {
-          btn.textContent = 'Success!';
+      }
+
+      // If form is hooked to an external service (web3forms, formspree, formsubmit)
+      if (action && (action.includes('web3forms.com') || action.includes('formspree.io') || action.includes('formsubmit.co'))) {
+        try {
+          let endpoint = action;
+          if (action.includes('formsubmit.co') && !action.includes('/ajax/')) {
+            endpoint = action.replace('formsubmit.co/', 'formsubmit.co/ajax/');
+          }
+
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+
+          const data = await response.json().catch(() => ({}));
+
+          const isSuccess = response.ok && (
+            data.success === true ||
+            data.success === "true" ||
+            data.ok === true ||
+            (!('success' in data) && !('error' in data))
+          );
+
+          if (isSuccess) {
+            if (btn) btn.textContent = 'Success! Message Sent';
+            form.reset();
+          } else {
+            const msg = data.message || data.error || 'Server rejected submission';
+            console.error('Submission error response:', msg, data);
+            alert(`Submission issue: ${msg}`);
+            throw new Error(msg);
+          }
+        } catch (error) {
+          console.error('Submission network error:', error);
+          if (btn) btn.textContent = 'Failed - Try Again';
+        } finally {
           setTimeout(() => {
+            if (btn) {
+              btn.textContent = originalText;
+              btn.disabled = false;
+            }
+          }, 4000);
+        }
+        return;
+      }
+
+      // Fallback animation for other mock forms
+      setTimeout(() => {
+        if (btn) btn.textContent = 'Success!';
+        setTimeout(() => {
+          if (btn) {
             btn.textContent = originalText;
             btn.disabled = false;
-            form.reset();
-          }, 2000);
-        }, 1000);
-      }
+          }
+          form.reset();
+        }, 2000);
+      }, 1000);
     });
   });
   /* ─── HERO SLIDESHOW LOGIC ─── */
