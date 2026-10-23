@@ -39,9 +39,35 @@ document.addEventListener('DOMContentLoaded', () => {
       const originalText = btn ? btn.textContent : 'Submit';
       const action = form.getAttribute('action');
 
+      // Find or create inline status message element
+      let statusMsg = form.querySelector('.form-status-msg');
+      if (!statusMsg) {
+        statusMsg = document.createElement('div');
+        statusMsg.className = 'form-status-msg';
+        statusMsg.setAttribute('aria-live', 'polite');
+        form.appendChild(statusMsg);
+      }
+      statusMsg.className = 'form-status-msg';
+      statusMsg.textContent = '';
+      statusMsg.removeAttribute('style');
+
       if (btn) {
-        btn.textContent = 'Submitting...';
+        btn.textContent = 'Sending...';
         btn.disabled = true;
+      }
+
+      // Check if browsing directly via local file protocol
+      if (window.location.protocol === 'file:') {
+        setTimeout(() => {
+          if (btn) {
+            btn.textContent = originalText;
+            btn.disabled = false;
+          }
+          statusMsg.className = 'form-status-msg is-error';
+          statusMsg.style.display = 'block';
+          statusMsg.textContent = "The message didn't go. FormSubmit requires a live web server or GitHub Pages to send emails (browsing as a local file:// is blocked by security).";
+        }, 500);
+        return;
       }
 
       // If form is hooked to an external service (web3forms, formspree, formsubmit)
@@ -70,39 +96,46 @@ document.addEventListener('DOMContentLoaded', () => {
           );
 
           if (isSuccess) {
-            if (btn) btn.textContent = 'Success! Message Sent';
+            if (btn) btn.textContent = 'Sent';
+            statusMsg.className = 'form-status-msg is-success';
+            statusMsg.style.display = 'block';
+            statusMsg.textContent = 'We have received the details, we will connect with you soon.';
             form.reset();
           } else {
-            const msg = data.message || data.error || 'Server rejected submission';
+            const msg = data.message || data.error || "The message didn't go";
             console.error('Submission error response:', msg, data);
-            alert(`Submission issue: ${msg}`);
             throw new Error(msg);
           }
         } catch (error) {
-          console.error('Submission network error:', error);
-          if (btn) btn.textContent = 'Failed - Try Again';
+          console.error('Submission error:', error);
+          if (btn) btn.textContent = originalText;
+          statusMsg.className = 'form-status-msg is-error';
+          statusMsg.style.display = 'block';
+          statusMsg.textContent = "The message didn't go. Please try again.";
         } finally {
           setTimeout(() => {
             if (btn) {
               btn.textContent = originalText;
               btn.disabled = false;
             }
-          }, 4000);
+          }, 3500);
         }
         return;
       }
 
       // Fallback animation for other mock forms
       setTimeout(() => {
-        if (btn) btn.textContent = 'Success!';
+        if (btn) btn.textContent = 'Sent';
+        statusMsg.className = 'form-status-msg is-success';
+        statusMsg.textContent = 'We have received the details, we will connect with you soon.';
+        form.reset();
         setTimeout(() => {
           if (btn) {
             btn.textContent = originalText;
             btn.disabled = false;
           }
-          form.reset();
-        }, 2000);
-      }, 1000);
+        }, 3500);
+      }, 800);
     });
   });
   /* ─── HERO SLIDESHOW LOGIC ─── */

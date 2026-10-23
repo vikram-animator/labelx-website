@@ -1376,6 +1376,51 @@ ul {
   font-family: inherit;
   cursor: pointer;
   font-size: 1rem;
+  transition: opacity 0.2s ease;
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Form Status Messages */
+.form-status-msg {
+  display: none;
+  margin-top: 1.5rem;
+  padding: 1rem 1.25rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  font-weight: 500;
+  border-radius: 2px;
+  animation: fadeInStatus 0.3s ease-in-out;
+}
+
+.form-status-msg.is-success {
+  display: block !important;
+  background-color: #f4fbf6;
+  color: #14532d;
+  border: 1px solid #bbf7d0;
+  border-left: 4px solid #16a34a;
+}
+
+.form-status-msg.is-error {
+  display: block !important;
+  background-color: #fef2f2;
+  color: #7f1d1d;
+  border: 1px solid #fecaca;
+  border-left: 4px solid #dc2626;
+}
+
+@keyframes fadeInStatus {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .apply-form-img {
